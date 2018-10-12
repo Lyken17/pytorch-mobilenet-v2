@@ -1,5 +1,7 @@
-import torch.nn as nn
 import math
+
+import torch.nn as nn
+from torch.utils.model_zoo import load_url
 
 
 def conv_bn(inp, oup, stride):
@@ -60,7 +62,7 @@ class InvertedResidual(nn.Module):
 
 
 class MobileNetV2(nn.Module):
-    def __init__(self, n_class=1000, input_size=224, width_mult=1.):
+    def __init__(self, num_classes=1000, input_size=224, width_mult=1.):
         super(MobileNetV2, self).__init__()
         block = InvertedResidual
         input_channel = 32
@@ -98,7 +100,7 @@ class MobileNetV2(nn.Module):
         # building classifier
         self.classifier = nn.Sequential(
             nn.Dropout(0.2),
-            nn.Linear(self.last_channel, n_class),
+            nn.Linear(self.last_channel, num_classes),
         )
 
         self._initialize_weights()
@@ -123,3 +125,13 @@ class MobileNetV2(nn.Module):
                 n = m.weight.size(1)
                 m.weight.data.normal_(0, 0.01)
                 m.bias.data.zero_()
+
+def mobilenet_v2(pretrained=False, **kwargs):
+    net = MobileNetV2(**kwargs)
+    if pretrained:
+        net.load_state_dict(load_url("http://file.lzhu.me/pytorch/models/mobilenet_v2-ecbe2b56.pth.tar", map_location="cpu"))
+    return net
+
+if __name__ == "__main__":
+    net = mobilenet_v2(pretrained=True)
+    print(net)
